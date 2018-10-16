@@ -295,44 +295,4 @@ hashvec = HashingVectorizer(n_features=2**6)
 doc_hash = hashvec.transform(example_doc)
 print(doc_hash.shape)
 
-
-doc_hash1 = hashvec.transform(x_train)
-
-tfidf = TfidfVectorizer(ngram_range=(1,1))
-tfidf.fit(x_train)
-
-
-########################################################
-
-from xgboost import XGBRegressor
-from sklearn.model_selection import GridSearchCV
-
-
-stopword_set = set()
-with open('jieba_extra/stop_words_w2v.txt','r', encoding='utf-8') as stopwords:
-    for stopword in stopwords:
-        stopword_set.add(stopword.strip('\n'))
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+###########################################################################
