@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Oct 16 16:40:16 2018
-
-@author: stat_pc
-"""
-###############################################################################
 import pandas as pd
 
 NUM_PROGRAM = 8
