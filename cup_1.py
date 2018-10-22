@@ -326,11 +326,9 @@ qa5_combined = qc(new_qa5)
 qa6_combined = qc(new_qa6)
 
 
-
-######################################################################
+###############################################################################
+###############################################################################
 # model 
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
 data_combined2 = pd.DataFrame(data_combined)
@@ -370,8 +368,100 @@ print(pred_prob[:5])
 pred_label = pred_prob.argmax(axis=1)
 print(pred_label)
 
-#  0.36800
+#  kaggle 正確率: 0.36800
 output = {'Id':range(0,500),'Answer':pred_label}
 output = pd.DataFrame(output,columns=['Id','Answer'])
 print(output[:5])
 output.to_csv('output_rf.csv',header=True,index=False)
+
+
+
+
+
+
+
+
+###############################################################################
+###############################################################################
+# Doc2Vec
+from gensim.models import Doc2Vec
+from gensim.models.doc2vec import LabeledSentence
+
+all_sectence = []
+for i,li in enumerate(abcd(cut_programs)+qaaaaaa):
+    all_sectence.append(LabeledSentence(words=li, tags=[i]))
+
+model = Doc2Vec(dm=1, size=100, window=5, negative=5, hs=0, min_count=2, workers=2)
+model.build_vocab(all_sectence)
+model.train(all_sectence, total_examples=model.corpus_count, epochs=model.iter)
+
+def sec_sim(data):
+    data_combined = []  # 兩句話皆轉成向量的資料集
+    for i in range(len(data)):
+        #sim2 = []
+        first = model.infer_vector(abc(data[i][0]))
+        second = model.infer_vector(data[i][1])
+        #sim2.append(1-spatial.distance.cosine(first, second))
+        #V1.append(sim2)
+        dist = scipy.spatial.distance.cosine(first, second)
+        data_combined.append(dist)
+    #data_combined2 = np.hstack((data_combined, V1))
+    #data_combined2 = pd.DataFrame(data_combined2)
+    return data_combined
+    # print(V1[:5])
+    # print(data_combined[:5])
+
+import numpy as np
+qasecsim = np.column_stack((sec_sim(new_qa1),sec_sim(new_qa2),sec_sim(new_qa3),sec_sim(new_qa4),sec_sim(new_qa5),sec_sim(new_qa6)))
+len(qasecsim)
+
+qasecsim_label = qasecsim.argmin(axis=1)
+
+
+#  kaggle 正確率: 0.27200
+output2 = {'Id':range(0,500),'Answer':qasecsim_label}
+output2 = pd.DataFrame(output2,columns=['Id','Answer'])
+print(output2[:5])
+output2.to_csv('output_d2v.csv',header=True,index=False)
+
+
+
+
+###############################################################################
+###############################################################################
+import scipy
+# 定義:兩句話皆轉成詞向量相加/取平均的資料集
+def qcc(data):
+    data_combined = []
+    for i in range(len(data)):
+        if data[i][0]==[]: 
+            first = np.zeros(100,)
+        else: 
+            first = model.wv[data[i][0]].sum(axis=0)
+        if data[i][1]==[]: 
+            second = np.zeros(100,)
+        else: 
+            second = model.wv[data[i][1]].sum(axis=0)
+        # dist = np.linalg.norm(first - second) # min-0.476
+        if data[i][0]==[] or data[i][1]==[]: 
+            dist = 0
+        else:
+        #    dist = np.corrcoef(first,second)[0,1] # max-0.536
+        # dist = np.max(np.abs(first-second)) # min-0.396
+        # dist = scipy.spatial.distance.chebyshev(first, second) # min-0.396
+        # dist = scipy.spatial.distance.mahalanobis(first, second,np.linalg.inv(np.cov(np.concatenate((first,second)).T)))
+        # dist = scipy.spatial.distance.correlation(first, second) # 0.536
+        # dist = scipy.spatial.distance.cityblock(first, second) #0.464
+            dist = scipy.spatial.distance.cosine(first, second) #0.544
+        # dist = scipy.spatial.distance.minkowski(first, second, 2) #1:0.464,2:0.468,3:0.492,4:0.48,5:0.48 6:0.452,7:0.432,8:0.42,20:0.384
+        data_combined.append(dist)
+    return(data_combined)
+    
+
+#  kaggle 正確率: 0.48800
+qacc = np.column_stack((qcc(new_qa1),qcc(new_qa2),qcc(new_qa3),qcc(new_qa4),qcc(new_qa5),qcc(new_qa6)))
+qacc_label = qacc.argmin(axis=1)
+output3 = {'Id':range(0,500),'Answer':qacc_label}
+output3 = pd.DataFrame(output3,columns=['Id','Answer'])
+print(output3[:5])
+output3.to_csv('output_3.csv',header=True,index=False)
