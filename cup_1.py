@@ -18,25 +18,31 @@ for i in range(1, NUM_PROGRAM+1):
 
 questions = pd.read_csv('Question.csv')
 
-print('Question')
-print('Episodes: %d' % (len(questions)))
-print(questions.columns)
-print()
+# Question view
+for j in range(89,110):
+    print("Q",j+1,":",questions.loc[j]['Question'])
+    for i in range(6):
+            print("A",i+1,":",questions.loc[j]['Option%d' % (i)])
+    print('--'*30) 
 
-print(questions.loc[:2]['Question'])
-print()
-
-for i in range(6):
-    print(questions.loc[:2]['Option%d' % (i)])
-    print()
-
-###############################################################################
+#########################################################################
+# 拆句子
 import jieba
-
 jieba.set_dictionary('big5_dict.txt')
-example_str = '我討厭吃蘋果'
-cut_example_str = jieba.lcut(example_str)
-print(cut_example_str)
+
+NUM_PROGRAM = 8
+
+# 停用詞
+with open('jieba_extra/stop_words.txt', 'r', encoding='utf8') as f:  
+    stops = f.read().split('\n') 
+
+# 自建辭典
+jieba.load_userdict("jieba_extra/my.dict.txt")
+
+
+# 停用詞
+with open('jieba_extra/stop_words.txt', 'r', encoding='utf8') as f:  
+    stops = f.read().split('\n') 
 
 
 def jieba_lines(lines):
@@ -48,6 +54,7 @@ def jieba_lines(lines):
     
     return cut_lines
 
+# 拆成8篇句子群   cut_programs[節目][文章][句子]
 cut_programs = []
 
 for program in programs:
@@ -68,9 +75,8 @@ print()
 print("first 3 lines in 1st episode of program 0: ")
 print(cut_programs[0][0][:3])
 
-
-###############################################################################
-
+#########################################################################
+# 拆問題
 cut_questions = []
 n = len(questions)
 
@@ -94,26 +100,48 @@ print(cut_questions[0][0])
 for i in range(1, 7):
     print(cut_questions[0][i])
     
-###############################################################################
-
-
 import numpy as np
-
+# 存檔
 np.save('cut_Programs.npy', cut_programs)
 np.save('cut_Questions.npy', cut_questions)
 
+
+
+
+#########################################################################
+#########################################################################
+#########################################################################
+
+# 下次重開spyder只要跑底下的
+import numpy as np
+import pandas as pd
+import jieba
+import operator
+jieba.set_dictionary('big5_dict.txt')
+
+NUM_PROGRAM = 8
+
+# 停用詞
+with open('jieba_extra/stop_words.txt', 'r', encoding='utf8') as f:  
+    stops = f.read().split('\n') 
+
+# 自建辭典
+jieba.load_userdict("jieba_extra/my.dict.txt")
+
+
 cut_programs = np.load('cut_Programs.npy')
-cut_Question = np.load('cut_Questions.npy')
+cut_questions = np.load('cut_Questions.npy')
 
 
-
-
+# 針對train data 建立詞頻字典
 word_dict = dict()
 def add_word_dict(w):
     if not w in word_dict:
         word_dict[w] = 1
     else:
         word_dict[w] += 1
+
+# 蒐集字 建立字頻表
 for program in cut_programs:
     for lines in program:
         for line in lines:
@@ -129,163 +157,184 @@ for question in cut_questions:
         line = question[i]
         for w in line:
             add_word_dict(w)
-import operator
+
 
 word_dict = sorted(word_dict.items(), key=operator.itemgetter(1), reverse=True)
 print("Total %d words in word_dict" % len(word_dict))
 
-VOC_SIZE = 15000
+# 選定詞頻範圍(38~81632)
+VOC_SIZE = 130000 
 VOC_START = 20
-
 voc_dict = word_dict[VOC_START:VOC_START+VOC_SIZE]
-print(voc_dict[:10])
-print()
-print("Total %d words in voc_dict" % len(voc_dict))
-np.save('voc_dict.npy', voc_dict)
-voc_dict = np.load('voc_dict.npy')
+
+# 設定 辭典列表
+voc_dict2 = []
+for i in range(len(voc_dict)):
+    voc_dict2.append(voc_dict[i][0] )
 
 
-
+# 建立 data
 import random
-
-NUM_TRAIN = 10000
+NUM_TRAIN = 20000
 TRAIN_VALID_RATE = 0.7
 def generate_training_data():
     Xs, Ys = [], []
     
     for i in range(NUM_TRAIN):
         pos_or_neg = random.randint(0, 1)
-        
         if pos_or_neg==1:
             program_id = random.randint(0, NUM_PROGRAM-1)
             episode_id = random.randint(0, len(cut_programs[program_id])-1)
             line_id = random.randint(0, len(cut_programs[program_id][episode_id])-2)
-            
-            Xs.append([cut_programs[program_id][episode_id][line_id], 
-                       cut_programs[program_id][episode_id][line_id+1]])
+           
+            Xs.append([[t for t in cut_programs[program_id][episode_id][line_id] if t not in stops],
+                       [t for t in cut_programs[program_id][episode_id][line_id+1] if t not in stops]] )
             Ys.append(1)
-            
         else:
             first_program_id = random.randint(0, NUM_PROGRAM-1)
             first_episode_id = random.randint(0, len(cut_programs[first_program_id])-1)
             first_line_id = random.randint(0, len(cut_programs[first_program_id][first_episode_id])-1)
-            
             second_program_id = random.randint(0, NUM_PROGRAM-1)
             second_episode_id = random.randint(0, len(cut_programs[second_program_id])-1)
             second_line_id = random.randint(0, len(cut_programs[second_program_id][second_episode_id])-1)
-            
-            Xs.append([cut_programs[first_program_id][first_episode_id][first_line_id], 
-                       cut_programs[second_program_id][second_episode_id][second_line_id]])
-            Ys.append(0)
+            Xs.append([[t for t in cut_programs[first_program_id][first_episode_id][first_line_id] if t not in stops],
+                       [t for t in cut_programs[second_program_id][second_episode_id][second_line_id] if t not in stops]] )
     
+            Ys.append(0)
     return Xs, Ys
+
+
 Xs, Ys = generate_training_data()
-
-x_train, y_train = Xs[:int(NUM_TRAIN*TRAIN_VALID_RATE)], Ys[:int(NUM_TRAIN*TRAIN_VALID_RATE)]
-x_valid, y_valid = Xs[int(NUM_TRAIN*TRAIN_VALID_RATE):], Ys[int(NUM_TRAIN*TRAIN_VALID_RATE):]
-
-
-example_doc = []
-
-# lines in 1st episode in program 0 
-for line in cut_programs[0][0]:
-    example_line = ''
-    for w in line:
-        if w in voc_dict:
-            example_line += w+' '
-        
-    example_doc.append(example_line)
-
-print(example_doc[:10])
+#####################################################
+# 定義函數:選字典中的詞
+def choosevoc(dat):
+    kkkk = []
+    for w in dat:
+        choose = ''
+        if w in voc_dict2 and w not in stops:
+            choose = w
+            kkkk.append(choose)
+    return kkkk
 
 
+## 取 Xs 中有在字典裡的字為 new_Xs
+new_Xs = Xs.copy()
+for i in range(NUM_TRAIN):
+    for j in range(1):
+        new_Xs[i][j] = choosevoc(Xs[i][j])
+    if i % 200 ==0 :
+        print("目前執行到",i+1,"/",NUM_TRAIN)
 
-
-
-import scipy as sp
-from sklearn.feature_extraction.text import CountVectorizer
-
-# ngram_range=(min, max), default: 1-gram => (1, 1)
-count = CountVectorizer(ngram_range=(1, 2))
-
-count.fit(example_doc)
-BoW = count.vocabulary_
-print('[vocabulary]\n')
-for key in list(BoW.keys())[:10]:
-    print('%s %d' % (key, BoW[key]))
-
-
-
-# get matrix (line_id, vocabulary_id) --> (this vocabulary occurs how many times in this line)
-doc_bag = count.transform(example_doc)
-print(' (lid, vid)     tf')
-print(doc_bag[:10])
-
-print('\nIs document-term matrix a scipy.sparse matrix? {}'.format(sp.sparse.issparse(doc_bag)))
+print(new_Xs[:10])
 
 
 
 
-doc_bag = doc_bag.toarray()
-print(doc_bag[:10])
+# 定義:把每句對話串在一起
+def abc(dat):
+    doc = []
+    for li in dat:
+        for w in li:
+            doc.append(w)
+    return doc 
 
-print('\nAfter calling .toarray(), is it a scipy.sparse matrix? {}'.format(sp.sparse.issparse(doc_bag)))
+# 定義:把每句字詞串在一起
+def abcd(dat):
+    doc = []
+    for li in dat:
+        for w in li:
+            for qq in w:
+                doc.append(qq)
+    return doc
 
-
-
-
-
-doc_bag = count.fit_transform(example_doc).toarray()
-
-print("[most frequent vocabularies]")
-
-# conpute how many times each word occurs in doc_bag
-bag_cnts = np.sum(doc_bag, axis=0)
-
-# get words occur in doc_bag
-words_num = bag_cnts.shape[0]
-ones_vector = np.ones(words_num)
-words = count.inverse_transform(ones_vector)[0]
-
-# sort bag_cnts and get its indices and values
-most_freq_word_index = bag_cnts.argsort()
-most_freq_word_times = np.sort(bag_cnts)
-
-top = 10
-# [::-1] reverses a list since sort is in ascending order
-for tok, v in zip(words[most_freq_word_index[::-1][:top]], 
-                        most_freq_word_times[::-1][:top]):
-    print('%s: %d' % (tok, v))
+# 處理 Question
+qaaaaaa=[]
+for i in range(len(cut_questions)):
+    qaaaaaa.append(abc(cut_questions[i][0]))
+    qaaaaaa.append(cut_questions[i][1])
+    qaaaaaa.append(cut_questions[i][2])
+    qaaaaaa.append(cut_questions[i][3])
+    qaaaaaa.append(cut_questions[i][4])
+    qaaaaaa.append(cut_questions[i][5])
+    qaaaaaa.append(cut_questions[i][6])
+print(qaaaaaa[:5])
 
 
+# 問題與六個選項合併(只選出在字典裡的字)
+new_qa = qaaaaaa.copy()
+for i in range(3500):
+    new_qa[i] = choosevoc(qaaaaaa[i])
+    if i %100 == 0:
+        print("目前執行到",i+1,"/",3500)
+print(new_qa[:10])
+
+####################################################################################
+
+# 建立 word2vec 
+import warnings
+warnings.filterwarnings('ignore')
+from gensim.models import Word2Vec
+
+# model = Word2Vec(abc(new_Xs), min_count=3) #把new_Xs中的所有單字放入當模型的單字庫
+# iter(訓練次數) 必須調整
+size_ = 200
+model = Word2Vec(abc(new_Xs)+new_qa, size=size_, window=5, min_count=1, workers=4,iter=5)
 
 
-from sklearn.feature_extraction.text import TfidfVectorizer
+model.wv['音樂','錢包']
+model.wv['媽給']
 
-tfidf = TfidfVectorizer(ngram_range=(1,1))
-tfidf.fit(example_doc)
-
-top = 10
-# get idf score of vocabularies
-idf = tfidf.idf_
-print('[vocabularies with smallest idf scores]')
-sorted_idx = idf.argsort()
-for i in range(top):
-    print('%s: %.2f' % (tfidf.get_feature_names()[sorted_idx[i]], idf[sorted_idx[i]]))
-
-doc_tfidf = tfidf.transform(example_doc).toarray()
-tfidf_sum = np.sum(doc_tfidf, axis=0)
-print("\n[vocabularies with highest tf-idf scores]")
-for tok, v in zip(tfidf.inverse_transform(np.ones(tfidf_sum.shape[0]))[0][tfidf_sum.argsort()[::-1]][:top], 
-                  np.sort(tfidf_sum)[::-1][:top]):
-    print('%s: %.2f' % (tok, v))
+print(model.wv.similarity('老師', '學生'))
+print(model.wv.similarity('認真', '豬'))
+print(model.wv.similarity('認真', '笨'))
+model.wv[new_Xs[0][0]].sum(axis=0)
 
 
-from sklearn.feature_extraction.text import HashingVectorizer
 
-hashvec = HashingVectorizer(n_features=2**6)
+import scipy
 
-doc_hash = hashvec.transform(example_doc)
-print(doc_hash.shape)
+data_combined = []
+for i in range(len(new_Xs)):
+    if new_Xs[i][0]==[]: 
+        first = np.zeros(size_,)
+    else: 
+        first = model.wv[new_Xs[i][0]].sum(axis=0)
+    if new_Xs[i][1]==[]: 
+        second = np.zeros(size_,)
+    else: 
+        second = model.wv[new_Xs[i][1]].sum(axis=0)
+    if new_Xs[i][0]==[] or new_Xs[i][1]==[]: 
+            dist = 0
+    else:
+        dist = scipy.spatial.distance.correlation(first, second) # cos值
+    sec_combined = np.hstack((first, second, dist))
+    data_combined.append(sec_combined)
+print(data_combined[:5])  # 兩句話皆轉成詞向量相加的資料集
 
-###########################################################################
+data_combined2 = pd.DataFrame(data_combined)
+data_combined2['Y'] = Ys
+data_combined2[:5]
+
+
+
+
+# model 
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+
+
+X = data_combined2.drop('Y', 1)
+y = data_combined2['Y']
+
+X_train, X_test, y_train, y_test = train_test_split( X, y, test_size=0.2, random_state=1)
+
+# RF 
+forest = RandomForestClassifier(criterion='entropy',
+                                n_estimators=300, 
+                                random_state=1,
+                                n_jobs=3)
+forest.fit(X_train, y_train)
+
+print('Train accuracy (RF): %.3f' % accuracy_score(y_train, forest.predict(X_train)))
+print('Valid accuracy (RF): %.3f' % accuracy_score(y_test, forest.predict(X_test)))
