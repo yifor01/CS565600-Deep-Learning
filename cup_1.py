@@ -465,3 +465,67 @@ output3 = {'Id':range(0,500),'Answer':qacc_label}
 output3 = pd.DataFrame(output3,columns=['Id','Answer'])
 print(output3[:5])
 output3.to_csv('output_3.csv',header=True,index=False)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###############################################################################################################
+###############################################################################################################
+###############################################################################################################
+model = Word2Vec(abcd(cut_programs) + qaaaaaa, size=size_, window=8, min_count=1, workers=4, sg=1, iter=18, hs=1)
+#model = Word2Vec(abc(new_Xs), min_count=1) #把new_Xs中的所有單字放入當模型的單字庫
+#model = Word2Vec(abc(new_Xs)+new_qa, size=100, window=5, min_count=1, workers=4)
+
+import scipy
+import keras.backend as K
+
+def exponent_neg_manhattan_distance(left, right):
+    return K.exp(-K.sum(K.abs(left - right), axis=1, keepdims=True))
+
+
+# 定義:兩句話皆轉成詞向量相加/取平均的資料集
+def qcc(data):
+    data_combined = []
+    for i in range(len(data)):
+        if data[i][0]==[]: 
+            first = np.zeros(size_,)
+        else: 
+            first = model.wv[data[i][0]].sum(axis=0)
+            
+        if data[i][1]==[]: 
+            second = np.zeros(size_,)
+        else: 
+            second = model.wv[data[i][1]].sum(axis=0)
+
+        if data[i][0]==[] or data[i][1]==[]: 
+            dist = 0
+        else:
+        # dist = np.corrcoef(first,second)[0,1] # max-0.536
+        # dist = scipy.spatial.distance.correlation(first, second) # 0.536
+            dist = scipy.spatial.distance.cosine(first, second) #0.544
+          #dist = exponent_neg_manhattan_distance(first, second)
+            
+        data_combined.append(dist)
+    return(data_combined)
+    
+
+
+qacc = np.column_stack((qcc(new_qa1),qcc(new_qa2),qcc(new_qa3),qcc(new_qa4),qcc(new_qa5),qcc(new_qa6)))
+qacc_label = qacc.argmin(axis=1)
+output3 = {'Id':range(0,500),'Answer':qacc_label}
+output3 = pd.DataFrame(output3,columns=['Id','Answer'])
+print(output3[:5])
+output3.to_csv('output_300_20_9.csv',header=True,index=False)
