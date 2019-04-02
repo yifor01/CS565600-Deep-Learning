@@ -21,4 +21,4 @@
         * Lab16-1 Q_Learning
 	* Lab17-1 DQN & Policy Network
   *	Comp04  
-  *     Comp05  
+  *	Comp05
