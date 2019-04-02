@@ -13,12 +13,12 @@
   *	Comp01 
 	* Lab12_1_CNN
 	* Lab12-2_Visualization_and_Style_Transfer
-  *	Comp02 
+  *	Comp02  
 	* Lab13 Seq2Seq Learning for Machine Translation 
 	* Lab14 Autoencoder
 	* Lab14-2 Improved WGAN
-  *     Comp03
+  *     Comp03  
         * Lab16-1 Q_Learning
 	* Lab17-1 DQN & Policy Network
-  *     Comp04
-  *     Comp05
+  *     Comp04  
+  *     Comp05  
