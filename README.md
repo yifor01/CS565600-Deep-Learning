@@ -10,7 +10,7 @@
 	* Lab07 Non-Parametric Methods & SVMs
 	* Lab08_CV_Ensembleing
 	* Lab10 TensorFlow101 and Word2vec
-  *	Comp01 
+  *	Comp01
 	* Lab12_1_CNN
 	* Lab12-2_Visualization_and_Style_Transfer
   *	Comp02  
