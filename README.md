@@ -17,8 +17,8 @@
 	* Lab13 Seq2Seq Learning for Machine Translation 
 	* Lab14 Autoencoder
 	* Lab14-2 Improved WGAN
-  * Comp03
-  * Lab16-1 Q_Learning
+  *     Comp03
+        * Lab16-1 Q_Learning
 	* Lab17-1 DQN & Policy Network
-  * Comp04
-  * Comp05
+  *     Comp04
+  *     Comp05
