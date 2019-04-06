@@ -15,19 +15,19 @@ Each row of flowers are generated from one of the 8 captions with different init
 
 
 
-10 epochs
+10 epochs:
 <p align="center"><img src="samples/train_09.png"></p>
 
-100 epochs
+100 epochs:
 <p align="center"><img src="samples/train_119.png"></p>
 
-200 epochs
+200 epochs:
 <p align="center"><img src="samples/train_245.png"></p>
 
-300 epochs
+300 epochs:
 <p align="center"><img src="samples/train_338.png"></p>
 
-700 epochs
+700 epochs:
 <p align="center"><img src="samples/train_723.png"></p>
 
 
