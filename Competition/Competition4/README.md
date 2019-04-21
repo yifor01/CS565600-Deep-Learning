@@ -2,7 +2,6 @@
 <center><h3>Team31: Dondon231&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</h3></center>
 <a id='Top'></a>
 
-### Trainning epochs
 Each row of flowers are generated from one of the 8 captions with different initial noise:  
 1. the flower shown has yellow anther red pistil and bright red petals
 2. this flower has petals that are yellow, white and purple and has dark lines
@@ -14,6 +13,7 @@ Each row of flowers are generated from one of the 8 captions with different init
 8. these white flowers have petals that start off white in color and end in a white towards the tips
 
 
+### Trainning epochs
 
 10 epochs:
 <p align="center"><img src="samples/train_09.png"></p>
